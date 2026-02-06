@@ -1,5 +1,12 @@
 from src.schema import SchedulingProblem
-SUPPORTED_CONSTRAINTS = {"capacity", "demand"}
+SUPPORTED_CONSTRAINTS = {
+    "capacity",
+    "demand",
+    "shift_coverage",
+    "skill_coverage",
+    "time_overlap",
+    "rest_constraint"
+}
 
 def classify_problem(problem: SchedulingProblem) -> str:
     
