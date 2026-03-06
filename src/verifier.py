@@ -41,9 +41,11 @@ def check_feasibility(problem: SchedulingProblem) -> bool:
             total_required = sum(required_hours.values())
 
             for skill, workers in available.items():
-                max_hours = workers * max_per_resource
+                max_hours = workers * shift_length
                 if required_hours.get(skill, 0) > max_hours:
                     return False
+                
+            return True
 
         elif constraint.type == "time_overlap":
             shifts = constraint.params["shifts"]
@@ -84,7 +86,7 @@ def check_feasibility(problem: SchedulingProblem) -> bool:
                         return False
                 else:
                     consecutive = 0
-                    
+
         else:
             raise ValueError(f"Unsupported constraint type: {constraint.type}")
 

@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict, Any, List
 
 @dataclass
 class Constraint:
     type: str
-    params: Dict[str, int]
+    params: Dict[str, Any]
 
 @dataclass
 class SchedulingProblem:

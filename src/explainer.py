@@ -4,91 +4,94 @@ from src.schema import SchedulingProblem
 def explain(problem: SchedulingProblem) -> str:
     explanation = []
 
-    total_capacity = None
-    total_required = None
+    total_workers_available = None
+    total_workers_required = None
+
+    skill_available = {}
+    skill_required = {}
 
     for constraint in problem.constraints:
 
-  
+        # --- Capacity ---
         if constraint.type == "capacity":
             rc = constraint.params["resource_count"]
-            max_pr = constraint.params["max_per_resource"]
-
-            total_capacity = rc * max_pr
+            total_workers_available = rc
 
             explanation.append(
-                f"Total capacity is {total_capacity} hours "
-                f"({rc} resources × {max_pr} hours each)."
+                f"Total available workers: {rc}."
             )
 
-        elif constraint.type == "demand":
-            total_required = constraint.params["total_required"]
-
-            explanation.append(
-                f"Total required workload is {total_required} hours."
-            )
-
+        # --- Shift Coverage ---
         elif constraint.type == "shift_coverage":
             shifts = constraint.params["shifts"]
-            shift_length = constraint.params["shift_length"]
 
-            shift_hours = sum(
-                workers * shift_length for workers in shifts.values()
-            )
-
-            total_required = shift_hours
+            total_workers_required = sum(shifts.values())
 
             explanation.append(
-                f"Shift coverage requires {shift_hours} total hours "
+                f"Shift coverage requires {total_workers_required} total workers "
                 f"across shifts {list(shifts.keys())}."
             )
 
+        # --- Skill Coverage ---
         elif constraint.type == "skill_coverage":
             shifts = constraint.params["shifts"]
-            shift_length = constraint.params["shift_length"]
+            available = constraint.params.get("available", {})
 
-            skill_hours = {}
-
+            # Count required per skill
             for shift in shifts.values():
                 for skill, count in shift.items():
-                    skill_hours[skill] = (
-                        skill_hours.get(skill, 0) + count * shift_length
-                    )
+                    skill_required[skill] = skill_required.get(skill, 0) + count
+
+            skill_available = available
 
             explanation.append(
-                f"Skill-based staffing requires the following hours: {skill_hours}."
+                f"Skill-based staffing requires: {skill_required}."
+            )
+            explanation.append(
+                f"Available skill capacity: {skill_available}."
             )
 
+        # --- Time Overlap ---
         elif constraint.type == "time_overlap":
-            shifts = constraint.params["shifts"]
-
             explanation.append(
-                f"Checked {len(shifts)} shifts for time overlaps to ensure "
-                f"no more than available workers are required at any time."
+                "Time overlap constraints were checked."
             )
 
+        # --- Rest Constraint ---
         elif constraint.type == "rest_constraint":
-            max_consecutive = constraint.params["max_consecutive"]
-
             explanation.append(
-                f"Checked rest constraint: no more than "
-                f"{max_consecutive} consecutive working days."
+                "Rest constraints were checked."
             )
-            
+
         else:
             explanation.append(
                 f"Constraint type '{constraint.type}' is not explainable."
             )
 
-  
-    if total_capacity is not None and total_required is not None:
-        if total_capacity >= total_required:
+    # --- Capacity Check for Basic Model ---
+    if total_workers_available is not None and total_workers_required is not None:
+        if total_workers_available >= total_workers_required:
             explanation.append(
-                "Overall capacity is sufficient to meet requirements."
+                "Overall worker capacity is sufficient."
             )
         else:
             explanation.append(
-                "Overall capacity is insufficient to meet requirements."
+                "Overall worker capacity is insufficient."
             )
+
+    # --- Skill Capacity Check ---
+    if skill_available and skill_required:
+        for skill in skill_required:
+            required = skill_required.get(skill, 0)
+            available = skill_available.get(skill, 0)
+
+            if available < required:
+                explanation.append(
+                    f"Insufficient {skill} workers: required {required}, available {available}."
+                )
+            else:
+                explanation.append(
+                    f"Sufficient {skill} workers."
+                )
 
     return "\n".join(explanation)
