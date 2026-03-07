@@ -9,7 +9,7 @@ from src.explainer import explain
 from src.solver import generate_basic_schedule
 from src.constraint_validator import validate_constraints
 from src.clarifier import generate_clarification
-
+from src.explainer import explain_infeasible
 
 def build_problem(parsed_json):
     constraints = []
@@ -21,6 +21,13 @@ def build_problem(parsed_json):
 
 
 def run_pipeline(user_text):
+    result = {
+        "feasible": None,
+        "schedule": None,
+        "conflict": None,
+        "explanation": None
+    }
+
     print("\n--- USER INPUT ---")
     print(user_text)
 
@@ -45,26 +52,15 @@ def run_pipeline(user_text):
         print("\n🤖 Clarification Needed:")
         print(clarification_question)
 
-        additional_input = input("\nYour answer: ")
-
-        # Combine original and clarification answer
-        combined_text = user_text + "\n" + additional_input
-
-        # Re-run parsing
-        parsed = parse_constraints(combined_text)
-
-        if parsed is None:
-            print("Still invalid. Stopping execution.")
-            return
-
-        problem = build_problem(parsed)
-
-        # Validate again
-        missing = validate_constraints(problem.constraints)
-
-        if missing:
-            print("Still incomplete after clarification. Stopping execution.")
-            return
+        # REPLACE WITH:
+        return {
+            "feasible": False,
+            "schedule": None,
+            "conflict": f"Missing details: {', '.join(missing)}",
+            "explanation": "",
+            "needs_clarification": True,
+            "clarification_question": clarification_question
+        }
 
     classification = classify_problem(problem)
     print("\nClassification:", classification)
@@ -80,12 +76,15 @@ def run_pipeline(user_text):
     else:
         feasible = True
 
+    result["feasible"] = feasible
     print("\nFeasible:", feasible)
 
     if feasible:
         print("\n--- Generated Schedule ---")
         print(schedule)
 
+        result["schedule"] = schedule
+    
         if schedule:
             assigned = set(n for workers in schedule.values() for n in workers)
 
@@ -103,9 +102,22 @@ def run_pipeline(user_text):
                 print(f"Assigned: {len(assigned)} nurses")
                 print(f"Unassigned: {total - len(assigned)} nurses")
                 print(f"Utilization: {utilization}%")
-                
+                result["utilization"] = f"{utilization}%"
+
+    else:
+        conflict = explain_infeasible(problem)
+        print("\n--- Conflict Explanation ---")
+        print(conflict)
+        result["conflict"] = conflict
+
+    explanation = explain(problem)
+
     print("\n--- Explanation ---")
-    print(explain(problem))
+    print(explanation)
+
+    result["explanation"] = explanation
+
+    return result
 
 
 if __name__ == "__main__":
@@ -117,4 +129,5 @@ if __name__ == "__main__":
             break
         lines.append(line)
     text = " ".join(lines)
-    run_pipeline(text)
+    result = run_pipeline(text)
+    

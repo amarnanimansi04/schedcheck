@@ -30,6 +30,7 @@ def generate_basic_schedule(problem):
             shift_names = list(c.params["shifts"].keys())
 
     if not shift_names:
+        print("❌ Solver stopped: no shifts defined.")
         return None
 
     context["shift_names"] = shift_names

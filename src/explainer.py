@@ -95,3 +95,34 @@ def explain(problem: SchedulingProblem) -> str:
                 )
 
     return "\n".join(explanation)
+
+
+def explain_infeasible(problem):
+    reasons = []
+
+    total_workers = 0
+    total_required = 0
+
+    for constraint in problem.constraints:
+
+        if constraint.type == "capacity":
+            total_workers += constraint.params["resource_count"]
+
+        elif constraint.type == "shift_coverage":
+            shifts = constraint.params["shifts"]
+
+            for shift, workers in shifts.items():
+                total_required += workers
+
+    if total_required > total_workers:
+        reasons.append(
+            f"Shift coverage requires {total_required} workers but only "
+            f"{total_workers} workers are available."
+        )
+
+    if not reasons:
+        reasons.append(
+            "Constraints conflict with each other, making the schedule infeasible."
+        )
+
+    return "\n".join(reasons)
