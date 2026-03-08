@@ -1,18 +1,18 @@
 # SchedCheck
 
-SchedCheck converts natural language scheduling descriptions into optimized, constraint-based schedules. Describe your staffing problem in plain English — the system extracts constraints, validates them, and generates a feasible schedule automatically.
+SchedCheck converts natural language scheduling descriptions into optimized workforce schedules using constraint programming.
 
-Built with Google OR-Tools CP-SAT, Groq LLM, and Streamlit.
+Describe your staffing problem in plain English. The system extracts constraints, validates them, and generates a feasible schedule automatically — no manual modeling required.
 
 ---
 
-## What it does
+## Demo
 
-You write this:
+Input:
 
 > "We have 4 workers. There are 3 shifts: morning, evening, night. Each shift needs 1 worker."
 
-SchedCheck produces this:
+Output:
 
 | Shift   | Assigned Worker |
 |---------|----------------|
@@ -20,17 +20,19 @@ SchedCheck produces this:
 | Evening | Worker 2       |
 | Night   | Worker 1       |
 
-**Utilization: 75%** — 3 of 4 workers assigned, 1 unassigned (mathematically correct given 3 shifts).
+**Utilization: 75%** — 3 of 4 workers assigned, 1 unassigned (correct given 3 shifts).
 
-If a schedule is impossible, the system explains why rather than silently failing.
+If a schedule is infeasible, the system explains the conflict rather than silently failing.
 
 ---
 
 ## Motivation
 
-Scheduling problems are everywhere — hospital staffing, retail shifts, warehouse operations. Formulating these as optimization problems traditionally requires manual constraint modeling, which is inaccessible to most users.
+Scheduling problems appear in many real-world settings such as hospital staffing, workforce shift planning, warehouse operations, and academic timetabling.
 
-SchedCheck explores whether a language model can bridge that gap: translating natural language descriptions into structured constraint models, making scheduling tools usable without technical expertise.
+These schedules are often created manually using spreadsheets, making it difficult to balance worker distribution and satisfy constraints like shift coverage or rest requirements.
+
+SchedCheck explores whether natural-language descriptions can be translated into structured constraint optimization models that automatically generate feasible schedules.
 
 ---
 
@@ -65,15 +67,21 @@ schedcheck/
 ├── app.py                      # Streamlit frontend
 ├── Dockerfile
 ├── requirements.txt
+├── README.md
 └── src/
     ├── main.py                 # Pipeline orchestration
     ├── solver.py               # OR-Tools CP-SAT model
+    ├── schema.py               # Data models
+    ├── validation.py           # Pydantic validation schemas
     ├── llm_interface.py        # Groq LLM constraint extraction
+    ├── llm_mock.py             # Mock LLM for testing
+    ├── llm_parser.py           # LLM response parsing
     ├── constraint_handlers.py  # Constraint application logic
-    ├── constraint_validator.py # Validation + missing detection
+    ├── constraint_validator.py # Validation and missing detection
     ├── classifier.py           # Problem type classification
     ├── clarifier.py            # Clarification question generation
-    └── explainer.py            # Feasibility explanations
+    ├── explainer.py            # Feasibility explanations
+    └── verifier.py             # Schedule verification
 ```
 
 ---
@@ -83,9 +91,21 @@ schedcheck/
 | Constraint | Description |
 |---|---|
 | `capacity` | Total workers and max shifts per worker |
-| `shift_coverage` | How many workers each shift requires |
-| `skill_coverage` | Skill-based staffing requirements (senior/junior) |
+| `shift_coverage` | Workers required per shift |
+| `skill_coverage` | Skill-based staffing (e.g. senior/junior) |
 | `rest_constraint` | Maximum consecutive shifts per worker |
+
+---
+
+## Tech Stack
+
+| Component | Technology |
+|---|---|
+| Constraint Solver | Google OR-Tools CP-SAT |
+| Language Model | Groq API — LLaMA 3.3 70B |
+| Validation | Pydantic |
+| Frontend | Streamlit |
+| Containerization | Docker |
 
 ---
 
@@ -100,15 +120,17 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Create a `.env` file:
+Create a `.env` file in the project root:
 ```
 GROQ_API_KEY=your_api_key_here
 ```
 
-Run:
+Start the app:
 ```bash
 python -m streamlit run app.py
 ```
+
+Open `http://localhost:8501`
 
 ---
 
@@ -122,32 +144,27 @@ Open `http://localhost:8501`
 
 ---
 
-## Tech Stack
-
-| Component | Technology |
-|---|---|
-| Language Model | Groq API — `llama-3.3-70b-versatile` |
-| Solver | Google OR-Tools CP-SAT |
-| Frontend | Streamlit |
-| Validation | Pydantic |
-| Deployment | Docker |
-
----
-
 ## Known Limitations
 
-- Scheduling is single-day only
+- Single-day scheduling only
+- Shift durations are extracted but not used in the optimization model
 - Worker preferences are not modeled
-- Shift times are not used in the optimization (only shift names and coverage counts)
 
 ---
 
-## Planned Improvements
+## Roadmap
 
 - Multi-day scheduling
-- Fair workload distribution across workers
 - Worker preference modeling
-- Schedule visualization
+- Fair workload distribution
+- Schedule visualization dashboard
+- Additional constraint types
+
+---
+
+## License
+
+MIT
 
 ---
 
