@@ -103,6 +103,7 @@ schedcheck/
 |---|---|
 | Constraint Solver | Google OR-Tools CP-SAT |
 | Language Model | Groq API — LLaMA 3.3 70B |
+| Backend | Python |
 | Validation | Pydantic |
 | Frontend | Streamlit |
 | Containerization | Docker |
