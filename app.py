@@ -73,4 +73,6 @@ if st.button("Solve Scheduling Problem"):
     st.write(result["explanation"])
     st.subheader("Utilization")
 
-    st.write(result["utilization"])
+    st.write(f"{result['utilization']}%")
+    st.write(f"{result['assigned_workers']} of {result['total_workers']} workers assigned")
+    st.write(f"{result['unassigned_workers']} worker(s) unassigned")

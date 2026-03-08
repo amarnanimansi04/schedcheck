@@ -102,7 +102,10 @@ def run_pipeline(user_text):
                 print(f"Assigned: {len(assigned)} nurses")
                 print(f"Unassigned: {total - len(assigned)} nurses")
                 print(f"Utilization: {utilization}%")
-                result["utilization"] = f"{utilization}%"
+                result["utilization"] = utilization
+                result["assigned_workers"] = len(assigned)
+                result["total_workers"] = total
+                result["unassigned_workers"] = total - len(assigned)
 
     else:
         conflict = explain_infeasible(problem)
