@@ -8,3 +8,7 @@ __pycache__/
 
 # macOS junk
 .DS_Store
+
+# Local scratch files
+llm_parser.py
+interview_prep/
